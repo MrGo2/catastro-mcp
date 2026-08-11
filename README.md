@@ -42,6 +42,39 @@ IP, con Muxía precargada en la caché. Todos los usuarios de esa instancia
 comparten la IP de salida hacia el Catastro, así que para volumen serio instala
 el paquete o monta tu propia instancia (abajo).
 
+## Ejemplo de uso
+
+Con el conector añadido, se le habla en lenguaje natural. Una conversación real
+(los datos son reales, verificados contra el Catastro el 11/08/2026):
+
+> **Tú:** Descarga el parcelario de Muxía (provincia 15, municipio 15053) y dime
+> cuánto mide la parcela 1 del polígono 9 y quién linda con ella.
+>
+> **Claude/ChatGPT:** He descargado el parcelario de Muxía: 43.188 parcelas.
+> La parcela 1 del polígono 9 es la referencia catastral `15053A00900001` y su
+> superficie oficial es de 15.149 m² (1,5 hectáreas). Linda con dos parcelas:
+> `15053A00900002` al noreste (1.497 m²) y `15053A00909043` al suroeste
+> (4.262 m²).
+
+> **Tú:** ¿En qué paraje está y de qué clase es?
+>
+> **Claude/ChatGPT:** Según la ficha de la sede electrónica, está en el paraje
+> FONTE SALGUEIRA (Muxía, A Coruña). Es suelo rústico de uso agrario, y su
+> referencia catastral completa es `15053A009000010000RY`.
+
+> **Tú:** Mi abuela decía que la finca se llamaba "fonte salgeira" o algo así.
+> ¿Hay parcelas con ese nombre?
+>
+> **Claude/ChatGPT:** Sí. Buscando por similitud aparece FONTE SALGUEIRA con un
+> 93 % de parecido: es la parcela `15053A00900001`, de 15.149 m². Un nombre que
+> no existe en el municipio no devuelve resultados, así que la coincidencia es
+> fiable.
+
+La búsqueda por paraje funciona sobre las fichas ya consultadas. Para un
+municipio recién descargado, primero se rellenan con
+`catastro_completar_parajes` (respeta el límite diario y se puede reanudar
+otro día).
+
 ## Herramientas
 
 Sin red, contra la caché local:
