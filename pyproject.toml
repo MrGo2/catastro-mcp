@@ -1,0 +1,22 @@
+[project]
+name = "catastro-mcp"
+version = "1.0.0"
+description = "Servidor MCP para el Catastro español: INSPIRE local + OVC + sede electrónica"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=1.2.0",
+    "httpx>=0.27",
+    "shapely>=2.0",
+    "uvicorn>=0.52.1",
+    "starlette>=1.6.0",
+]
+
+[project.scripts]
+catastro-mcp = "catastro_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/catastro_mcp"]

@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+.remember/
+.mcp.json
+uv.lock
