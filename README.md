@@ -57,6 +57,26 @@ claude mcp add catastro -- uv run --directory ~/Edelwyss/infrastructure/catastro
 - `catastro_estado()` diagnosticó correctamente el bloqueo real del OVC
   (RC válida e inventada fallan igual → IP) con la sede operativa.
 
+## Uso local — cada uno con su propia IP (recomendado)
+
+Sin servidores ni dominios: el servidor corre en tu máquina y consulta al
+Catastro con TU IP (cuota y bloqueos solo tuyos). Un comando:
+
+```bash
+claude mcp add catastro -- uvx --from git+https://github.com/MrGo2/catastro-mcp catastro-mcp
+```
+
+O en Claude Desktop / cualquier cliente MCP (`claude_desktop_config.json`):
+
+```json
+{"mcpServers": {"catastro": {"command": "uvx",
+  "args": ["--from", "git+https://github.com/MrGo2/catastro-mcp", "catastro-mcp"]}}}
+```
+
+Requiere [uv](https://docs.astral.sh/uv/) instalado. La caché se crea en
+`~/.catastro-mcp/`. Vale para Claude Desktop y Claude Code; el móvil y
+claude.ai web solo aceptan MCP remotos — para eso está la instancia pública.
+
 ## Instancia pública — sin instalar nada
 
 ```
