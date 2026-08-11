@@ -1,116 +1,145 @@
-# catastro-mcp
+# mcp-catastro
 
-Servidor MCP para el Catastro español. Encapsula las tres vías de acceso y las
-decisiones que arruinan el trabajo si se toman mal (medido en la sesión de la
-herencia, 11/08/2026).
+[![npm](https://img.shields.io/npm/v/mcp-catastro)](https://www.npmjs.com/package/mcp-catastro)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![node](https://img.shields.io/badge/node-%E2%89%A522-brightgreen)](package.json)
 
-## Las tres vías
+Servidor MCP para el Catastro español. Descarga el parcelario oficial INSPIRE de
+un municipio y responde en local (superficie, geometría, parcelas colindantes,
+búsqueda por paraje), y consulta el OVC y la sede electrónica cuando hace falta
+la red, con límites diarios que evitan que el Catastro te corte la IP.
 
-| Vía | Host | Cuándo | Límite |
-|---|---|---|---|
-| INSPIRE GML | www.catastro.hacienda.gob.es | >20 parcelas, geometría, superficie oficial | ninguno |
-| OVC (SOAP) | ovc.catastro.meh.es | resolver RC por polígono/parcela o coordenada | ~32k acumuladas → IP cortada |
-| Sede (HTML) | www1.sedecatastro.gob.es | paraje, clase, uso, RC de 20 | host distinto: sobrevive al bloqueo del OVC |
-
-## Herramientas (10)
-
-Sin red (caché SQLite en `~/.catastro-mcp/cache.db`):
-- `catastro_descargar_municipio(provincia, municipio)` — fundacional; baja el GML
-- `catastro_parcela_local(rc)` — superficie oficial (areaValue), centroide, WKT
-- `catastro_vecinas(rc, contacto_max)` — colindantes con orientación cardinal
-- `catastro_en_radio(x, y, radio)` — parcelas por centroide en un círculo
-- `catastro_buscar_paraje(municipio, texto, umbral)` — búsqueda difusa
-
-Con red (una petición por llamada, limitador puesto):
-- `catastro_ficha(rc, provincia_del, municipio_mun)` — sede; acepta RC de 14
-- `catastro_por_poligono_parcela(provincia, municipio, poligono, parcela)` — OVC
-- `catastro_por_coordenada(x, y, srs)` — OVC
-
-Control:
-- `catastro_estado()` — control de tres puntas: distingue "no existe" de "no puedo"
-- `catastro_completar_parajes(municipio, rcs)` — tanda reanudable con limitador
-
-## Reglas de diseño (no negociables)
-
-1. La superficie manda desde el `areaValue` del GML. El servidor no acepta
-   superficies de otro origen.
-2. El limitador cuenta el TOTAL diario por host (techo 1000), no solo el ritmo.
-   A 10 fallos consecutivos, parada automática.
-3. Un 403 o una ficha vacía no se interpretan solos: `catastro_estado()` primero.
-4. No hay valor de referencia (requiere certificado/Cl@ve) ni titularidad
-   (dato protegido) por ninguna vía pública.
+Nació de un caso real: localizar las fincas de una herencia en Muxía (A Coruña).
+Por el camino aprendimos a base de errores qué vía usar para cada cosa, y este
+servidor encapsula esas decisiones para que nadie tenga que repetirlas.
 
 ## Instalación
 
-```bash
-cd ~/Edelwyss/infrastructure/catastro-mcp
-uv sync
-claude mcp add catastro -- uv run --directory ~/Edelwyss/infrastructure/catastro-mcp catastro-mcp
-```
-
-## Verificado en vivo (11/08/2026)
-
-- Muxía (15053): 43.188 parcelas descargadas y cacheadas en 10 s.
-- Polígono 9 parcela 1 → RC `15053A00900001`, 15.149 m², paraje FONTE SALGUEIRA.
-- Prueba cruzada: superficie GML (15149) == superficie gráfica de la sede (15.149 m²).
-- Control negativo difuso: "PRADO DO INVENTADO" → 0 resultados.
-- `catastro_estado()` diagnosticó correctamente el bloqueo real del OVC
-  (RC válida e inventada fallan igual → IP) con la sede operativa.
-
-## Uso local — cada uno con su propia IP (recomendado)
-
-Sin servidores ni dominios: el servidor corre en tu máquina y consulta al
-Catastro con TU IP (cuota y bloqueos solo tuyos). Un comando (Node ≥22):
+Con Claude Code (Node 22 o superior):
 
 ```bash
 claude mcp add catastro -- npx -y mcp-catastro
 ```
 
-O en Claude Desktop / cualquier cliente MCP (`claude_desktop_config.json`):
+Con Claude Desktop o cualquier cliente MCP, en `claude_desktop_config.json`:
 
 ```json
-{"mcpServers": {"catastro": {"command": "npx", "args": ["-y", "mcp-catastro"]}}}
+{ "mcpServers": { "catastro": { "command": "npx", "args": ["-y", "mcp-catastro"] } } }
 ```
 
-La caché se crea en `~/.catastro-mcp/`. Vale para Claude Desktop y Claude Code;
-el móvil y claude.ai web solo aceptan MCP remotos — para eso está la instancia
-pública. (Hay una implementación Python equivalente en `python/`, que es la que
-corre la instancia remota.)
+El servidor corre en tu máquina y consulta al Catastro con tu IP, así que la
+cuota y los bloqueos son solo tuyos. La caché se crea en `~/.catastro-mcp/`.
 
-## Instancia pública — sin instalar nada
+¿Cliente sin soporte de MCP local (claude.ai web, app móvil, ChatGPT)? Hay una
+instancia pública, sin registro:
 
 ```
 https://catastro.mestria.es/mcp
 ```
 
-Añádela como conector MCP en claude.ai (Ajustes → Conectores → personalizado),
-en la app móvil de Claude o en ChatGPT (developer mode). Sin registro: cuota
-anónima de 200 llamadas/día por IP. La caché trae Muxía (A Coruña) precargada;
-pide otro municipio con `catastro_descargar_municipio`.
+Añádela como conector personalizado. Cuota anónima de 200 llamadas al día por
+IP, con Muxía precargada en la caché. Todos los usuarios de esa instancia
+comparten la IP de salida hacia el Catastro, así que para volumen serio instala
+el paquete o monta tu propia instancia (abajo).
 
-## Montar tu propia instancia
+## Herramientas
 
-El modo HTTP (`python -m catastro_mcp.http`) expone el servidor por streamable
-HTTP con token por persona y cuota diaria por token (2000 llamadas).
+Sin red, contra la caché local:
+
+| Herramienta | Qué hace |
+|---|---|
+| `catastro_descargar_municipio` | Baja el parcelario INSPIRE completo del municipio y construye la caché. Es la operación fundacional: el resto la da por hecha |
+| `catastro_parcela_local` | Superficie oficial, centroide y geometría de una parcela |
+| `catastro_vecinas` | Parcelas colindantes, con distancia y orientación cardinal |
+| `catastro_en_radio` | Parcelas cuyo centroide cae dentro de un círculo |
+| `catastro_buscar_paraje` | Búsqueda difusa por nombre de paraje |
+
+Con red, una petición por llamada y siempre con el limitador puesto:
+
+| Herramienta | Qué hace |
+|---|---|
+| `catastro_ficha` | Ficha de la sede electrónica: paraje, clase, uso, superficie gráfica y referencia de 20 caracteres |
+| `catastro_por_poligono_parcela` | Resuelve la referencia catastral desde la numeración polígono/parcela |
+| `catastro_por_coordenada` | Qué parcela hay en un punto |
+
+De control:
+
+| Herramienta | Qué hace |
+|---|---|
+| `catastro_estado` | Diagnóstico de acceso: distingue "el dato no existe" de "me han cortado" |
+| `catastro_completar_parajes` | Recorre una lista de referencias rellenando parajes, reanudable |
+
+## Las tres vías del Catastro
+
+El Catastro tiene tres formas de acceso que no se parecen en nada, y elegir mal
+es lo que arruina el trabajo.
+
+| Vía | Host | Para qué | Límite |
+|---|---|---|---|
+| Descarga INSPIRE (GML) | www.catastro.hacienda.gob.es | Más de ~20 parcelas, geometría, superficie oficial | Ninguno |
+| OVC (SOAP) | ovc.catastro.meh.es | Resolver referencias por polígono/parcela o coordenada | Sin límite documentado, pero con ~32.000 peticiones acumuladas cortan la IP |
+| Sede electrónica (HTML) | www1.sedecatastro.gob.es | Paraje, clase, uso, referencia de 20 caracteres | Host distinto del OVC: sobrevive a su bloqueo |
+
+Tres detalles de la sede que no están documentados en ningún sitio: acepta la
+referencia de 14 caracteres (sin dígitos de control, que es justo lo que da el
+GML), vive en otro host (el bloqueo del OVC no le afecta) y devuelve más campos
+que la consulta SOAP básica.
+
+## Decisiones de diseño
+
+La caché no es una optimización, es el diseño. El servidor responde desde disco
+por defecto y sale a la red solo cuando el dato no está o se lo pides. De las
+preguntas típicas sobre una finca (¿cuánto mide?, ¿quién linda?, ¿qué hay
+cerca?), solo el nombre del paraje necesita red.
+
+El limitador cuenta el total diario por host (techo de 1000 peticiones), no
+solo el ritmo. Un ritmo razonable con un acumulado grande también corta la IP:
+lo medimos a 3,2 peticiones por segundo. A 10 fallos consecutivos el servidor
+para solo.
+
+Una ficha vacía o un 403 no se interpretan solos. Una referencia inventada
+devuelve el mismo 403 que una IP cortada, así que `catastro_estado` consulta a
+la vez una referencia que funcionó y una inventada: si las dos fallan igual, el
+problema es tu acceso, no los datos.
+
+La superficie sale siempre del `areaValue` del GML, que es la fuente oficial.
+La superficie gráfica de la sede se guarda como dato informativo, pero no pisa
+a la del GML.
+
+## Lo que no puede dar
+
+El valor de referencia solo se consulta en la sede identificándose con
+certificado digital o Cl@ve, y la titularidad es dato protegido. Ninguna API
+pública los expone, y este servidor tampoco.
+
+## Montar tu propia instancia remota
+
+En `python/` hay una implementación equivalente en Python que además expone el
+servidor por streamable HTTP, pensada para servir a varias personas:
 
 ```bash
-# alta de una persona (imprime su token)
-python -m catastro_mcp.http crear-token nombre
+cd python && uv sync
+CATASTRO_MCP_PUBLIC_HOST=tu-dominio uv run python -m catastro_mcp.http
 ```
 
-Acceso anónimo: exporta `CATASTRO_MCP_ANONIMO=1` (cuota por IP de cliente).
-Conexión con token desde clientes que solo aceptan URL:
+Cada persona recibe un token (`python -m catastro_mcp.http crear-token nombre`)
+con cuota diaria propia de 2000 llamadas, y `CATASTRO_MCP_ANONIMO=1` abre
+además el acceso sin token con cuota de 200 al día por IP de cliente. El token
+puede ir en la cabecera `X-Auth-Token` o en la ruta
+(`https://tu-dominio/t/<token>/mcp`) para clientes que solo aceptan una URL.
+El access log va apagado a propósito, porque el token viaja en la ruta.
 
-```
-https://tu-dominio/t/<token>/mcp
-```
+## Verificado en vivo
 
-Con cabeceras: `X-Auth-Token: <token>` sobre `https://tu-dominio/mcp` (preferido).
+Todo lo de arriba está medido, no copiado de documentación (11/08/2026):
 
-Variables: `CATASTRO_MCP_PORT` (8765) y `CATASTRO_MCP_PUBLIC_HOST` (el hostname
-público, para la protección anti DNS-rebinding). El access log va apagado a
-propósito: el token viaja en la ruta.
+- Muxía (15053): 43.188 parcelas descargadas y cacheadas en 5 segundos.
+- Polígono 9, parcela 1: referencia `15053A00900001`, 15.149 m², paraje FONTE SALGUEIRA.
+- Prueba cruzada de fuentes: la superficie del GML y la superficie gráfica de la sede coinciden al metro.
+- Control negativo de la búsqueda difusa: un paraje inventado devuelve cero resultados.
+- `catastro_estado` diagnosticó un bloqueo real de IP en el OVC mientras la sede seguía operativa.
 
-Nota de convivencia: todos los usuarios de una instancia comparten la IP de
-salida, y el bloqueo del Catastro es por IP. El techo diario por host (1000)
-protege a todos; si necesitas más volumen, monta tu propia instancia.
+## Licencia
+
+MIT. No afiliado a la Dirección General del Catastro. Los datos catastrales
+son públicos y se sirven bajo las condiciones de la DGC.
