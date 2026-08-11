@@ -1,7 +1,7 @@
 {
   "name": "mcp-catastro",
   "mcpName": "io.github.MrGo2/catastro-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MCP server for the Spanish Catastro - local INSPIRE parcel cache, OVC lookups and sede electronica, with daily rate caps and block diagnosis",
   "type": "module",
   "bin": {
