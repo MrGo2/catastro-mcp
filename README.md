@@ -37,7 +37,7 @@ instancia pública, sin registro:
 https://catastro.mestria.es/mcp
 ```
 
-Añádela como conector personalizado. Cuota anónima de 200 llamadas al día por
+Añádela como conector personalizado. Cuota anónima de 50 llamadas al día por
 IP, con Muxía precargada en la caché. Todos los usuarios de esa instancia
 comparten la IP de salida hacia el Catastro, así que para volumen serio instala
 el paquete o monta tu propia instancia (abajo).
@@ -124,7 +124,7 @@ CATASTRO_MCP_PUBLIC_HOST=tu-dominio uv run python -m catastro_mcp.http
 
 Cada persona recibe un token (`python -m catastro_mcp.http crear-token nombre`)
 con cuota diaria propia de 2000 llamadas, y `CATASTRO_MCP_ANONIMO=1` abre
-además el acceso sin token con cuota de 200 al día por IP de cliente. El token
+además el acceso sin token con cuota de 50 al día por IP de cliente. El token
 puede ir en la cabecera `X-Auth-Token` o en la ruta
 (`https://tu-dominio/t/<token>/mcp`) para clientes que solo aceptan una URL.
 El access log va apagado a propósito, porque el token viaja en la ruta.

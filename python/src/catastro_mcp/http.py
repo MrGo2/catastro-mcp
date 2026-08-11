@@ -19,7 +19,7 @@ from .server import mcp
 
 TOKENS_PATH = Path.home() / ".catastro-mcp" / "tokens"
 CUOTA_DIARIA_TOKEN = 2000    # llamadas MCP por persona y día (la mayoría son locales)
-CUOTA_DIARIA_ANONIMA = 200   # sin token, por IP de cliente
+CUOTA_DIARIA_ANONIMA = 50    # sin token, por IP de cliente
 ANONIMO_OK = os.environ.get("CATASTRO_MCP_ANONIMO", "") == "1"
 
 
