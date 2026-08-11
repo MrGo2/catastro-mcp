@@ -18,7 +18,9 @@ from .limiter import LIMITADOR
 from .server import mcp
 
 TOKENS_PATH = Path.home() / ".catastro-mcp" / "tokens"
-CUOTA_DIARIA_TOKEN = 2000  # llamadas MCP por persona y día (la mayoría son locales)
+CUOTA_DIARIA_TOKEN = 2000    # llamadas MCP por persona y día (la mayoría son locales)
+CUOTA_DIARIA_ANONIMA = 200   # sin token, por IP de cliente
+ANONIMO_OK = os.environ.get("CATASTRO_MCP_ANONIMO", "") == "1"
 
 
 def _cargar_tokens() -> dict[str, str]:
@@ -53,14 +55,25 @@ class AuthMiddleware:
             scope = dict(scope)
             scope["path"] = "/" + subpath
         nombre = tokens.get(token or "")
-        if nombre is None:
+        if nombre is not None:
+            clave, cuota = f"token:{nombre}", CUOTA_DIARIA_TOKEN
+        elif ANONIMO_OK:
+            # acceso público sin token: cuota por IP de cliente (tras Cloudflare,
+            # la IP real viene en CF-Connecting-IP)
+            ip = "?"
+            for k, v in scope.get("headers", []):
+                if k == b"cf-connecting-ip":
+                    ip = v.decode()
+            if ip == "?" and scope.get("client"):
+                ip = scope["client"][0]
+            clave, cuota = f"ip:{ip}", CUOTA_DIARIA_ANONIMA
+        else:
             resp = JSONResponse({"error": "no autorizado"}, status_code=401)
             return await resp(scope, receive, send)
-        clave = f"token:{nombre}"
         usados = LIMITADOR.usados_hoy(clave)
-        if usados >= CUOTA_DIARIA_TOKEN:
+        if usados >= cuota:
             resp = JSONResponse(
-                {"error": f"cuota diaria agotada ({usados}/{CUOTA_DIARIA_TOKEN})"},
+                {"error": f"cuota diaria agotada ({usados}/{cuota})"},
                 status_code=429)
             return await resp(scope, receive, send)
         _contar(clave)

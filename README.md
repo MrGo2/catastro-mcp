@@ -57,7 +57,18 @@ claude mcp add catastro -- uv run --directory ~/Edelwyss/infrastructure/catastro
 - `catastro_estado()` diagnosticó correctamente el bloqueo real del OVC
   (RC válida e inventada fallan igual → IP) con la sede operativa.
 
-## Uso remoto (móvil, claude.ai, ChatGPT)
+## Instancia pública — sin instalar nada
+
+```
+https://catastro.mestria.es/mcp
+```
+
+Añádela como conector MCP en claude.ai (Ajustes → Conectores → personalizado),
+en la app móvil de Claude o en ChatGPT (developer mode). Sin registro: cuota
+anónima de 200 llamadas/día por IP. La caché trae Muxía (A Coruña) precargada;
+pide otro municipio con `catastro_descargar_municipio`.
+
+## Montar tu propia instancia
 
 El modo HTTP (`python -m catastro_mcp.http`) expone el servidor por streamable
 HTTP con token por persona y cuota diaria por token (2000 llamadas).
@@ -67,7 +78,8 @@ HTTP con token por persona y cuota diaria por token (2000 llamadas).
 python -m catastro_mcp.http crear-token nombre
 ```
 
-Conexión desde clientes que solo aceptan URL (claude.ai conectores, ChatGPT):
+Acceso anónimo: exporta `CATASTRO_MCP_ANONIMO=1` (cuota por IP de cliente).
+Conexión con token desde clientes que solo aceptan URL:
 
 ```
 https://tu-dominio/t/<token>/mcp
