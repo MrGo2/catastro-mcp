@@ -4,3 +4,6 @@ __pycache__/
 .remember/
 .mcp.json
 uv.lock
+
+# privado: instancia propia y tokens
+DEPLOY-PRIVADO.md
