@@ -60,22 +60,22 @@ claude mcp add catastro -- uv run --directory ~/Edelwyss/infrastructure/catastro
 ## Uso local — cada uno con su propia IP (recomendado)
 
 Sin servidores ni dominios: el servidor corre en tu máquina y consulta al
-Catastro con TU IP (cuota y bloqueos solo tuyos). Un comando:
+Catastro con TU IP (cuota y bloqueos solo tuyos). Un comando (Node ≥22):
 
 ```bash
-claude mcp add catastro -- uvx --from git+https://github.com/MrGo2/catastro-mcp catastro-mcp
+claude mcp add catastro -- npx -y mcp-catastro
 ```
 
 O en Claude Desktop / cualquier cliente MCP (`claude_desktop_config.json`):
 
 ```json
-{"mcpServers": {"catastro": {"command": "uvx",
-  "args": ["--from", "git+https://github.com/MrGo2/catastro-mcp", "catastro-mcp"]}}}
+{"mcpServers": {"catastro": {"command": "npx", "args": ["-y", "mcp-catastro"]}}}
 ```
 
-Requiere [uv](https://docs.astral.sh/uv/) instalado. La caché se crea en
-`~/.catastro-mcp/`. Vale para Claude Desktop y Claude Code; el móvil y
-claude.ai web solo aceptan MCP remotos — para eso está la instancia pública.
+La caché se crea en `~/.catastro-mcp/`. Vale para Claude Desktop y Claude Code;
+el móvil y claude.ai web solo aceptan MCP remotos — para eso está la instancia
+pública. (Hay una implementación Python equivalente en `python/`, que es la que
+corre la instancia remota.)
 
 ## Instancia pública — sin instalar nada
 
