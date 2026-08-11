@@ -1,0 +1,58 @@
+{
+  "name": "mcp-catastro",
+  "mcpName": "io.github.MrGo2/catastro-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for the Spanish Catastro - local INSPIRE parcel cache, OVC lookups and sede electronica, with daily rate caps and block diagnosis",
+  "type": "module",
+  "bin": {
+    "catastro-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js",
+    "pretest": "tsc",
+    "test": "node --test test/*.test.mjs",
+    "prepublishOnly": "tsc",
+    "inspect": "pnpm build && pnpm dlx @modelcontextprotocol/inspector node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MrGo2/catastro-mcp.git"
+  },
+  "homepage": "https://github.com/MrGo2/catastro-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/MrGo2/catastro-mcp/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "catastro",
+    "spain",
+    "inspire",
+    "cadastre",
+    "parcels",
+    "gis",
+    "claude"
+  ],
+  "author": "Carlos Lorenzo",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "fflate": "^0.8.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

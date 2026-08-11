@@ -7,3 +7,7 @@ uv.lock
 
 # privado: instancia propia y tokens
 DEPLOY-PRIVADO.md
+node_modules/
+dist/
+python/.venv/
+python/uv.lock
